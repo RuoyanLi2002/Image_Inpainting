@@ -80,8 +80,7 @@ def color_patch(patch, pc, ns, args, pc_args):
     #                                 arr_valid_ycocg = pc_args["arr_valid_ycocg"], arr_num_valid_ycocg = pc_args["arr_num_valid_ycocg"])
 
     grey_prob = compute_grey_prob(args, pc.num_elements, grey_arr = Grey_patch.numpy(),
-                                    param_arr = pc_args["param_array"], grey_idx_to_prod_se_arr = pc_args["grey_idx_to_prod_se_array"],
-                                    arr_valid_ycocg = pc_args["arr_valid_ycocg"], arr_num_valid_ycocg = pc_args["arr_num_valid_ycocg"])
+                                    param_arr = pc_args["param_array"], grey_idx_to_prod_se_arr = pc_args["grey_idx_to_prod_se_array"])
 
                                     
     end_time = time.perf_counter()
@@ -114,10 +113,8 @@ def main():
         pc.to(device)
 
     param_array, grey_idx_to_prod_se_array, color_idx_to_input_se_array = create_circuit_info(ns, pc, args)
-    arr_valid_ycocg, arr_num_valid_ycocg = create_grey_info(args)
 
-    pc_args = {"param_array": param_array, "grey_idx_to_prod_se_array": grey_idx_to_prod_se_array, "color_idx_to_input_se_array": color_idx_to_input_se_array,
-                "arr_valid_ycocg": arr_valid_ycocg, "arr_num_valid_ycocg": arr_num_valid_ycocg}
+    pc_args = {"param_array": param_array, "grey_idx_to_prod_se_array": grey_idx_to_prod_se_array, "color_idx_to_input_se_array": color_idx_to_input_se_array}
 
     data = np.load('/space/liruoyan/ImageNet/imagenet32/val/val_data.npz')
     images = data['data']

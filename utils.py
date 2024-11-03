@@ -36,9 +36,9 @@ def correct_prod_node(scope, ls, args):
         
     return False
 
-def rgb_index_to_prod_node_index(ns, red_index, green_index, blue_index, args):
+def rgb_index_to_prod_node_index(ns, red_index, args):
     for temp_ns in ns:
-        if isinstance(temp_ns, ProdNodes) and correct_prod_node(temp_ns.scope.to_list(), [red_index, green_index, blue_index], args):
+        if isinstance(temp_ns, ProdNodes) and correct_prod_node(temp_ns.scope.to_list(), [red_index], args):
             s, e = temp_ns._output_ind_range
 
             return s, e
@@ -80,16 +80,12 @@ def create_circuit_info(ns, pc, args):
         grey_idx_to_prod_se_dict = {}
         color_idx_to_input_se_dict = {}
         for grey_index in range(args.data_shape[1]*args.data_shape[2]):
-            red_index, green_index, blue_index = grey_index_to_rgb_index(grey_index, args)
-            grey_start, grey_end = rgb_index_to_prod_node_index(ns, red_index, green_index, blue_index, args)
+            red_index, _, _ = grey_index_to_rgb_index(grey_index, args)
+            grey_start, grey_end = rgb_index_to_prod_node_index(ns, red_index, args)
             grey_idx_to_prod_se_dict[grey_index] = [grey_start, grey_end]
             
             red_s, red_e = input_node_se(ns, red_index)
-            green_s, green_e = input_node_se(ns, green_index)
-            blue_s, blue_e = input_node_se(ns, blue_index)
             color_idx_to_input_se_dict[red_index] = [red_s, red_e]
-            color_idx_to_input_se_dict[green_index] = [green_s, green_e]
-            color_idx_to_input_se_dict[blue_index] = [blue_s, blue_e]
 
         grey_idx_to_prod_se_array = np.array(list(grey_idx_to_prod_se_dict.values()))
         grey_idx_to_prod_se_array = grey_idx_to_prod_se_array.reshape(256, 2)
@@ -111,42 +107,8 @@ def create_circuit_info(ns, pc, args):
 
     return param_array, grey_idx_to_prod_se_array, color_idx_to_input_se_array
 
-def create_grey_info(args):
-    file_path = os.path.join(args.cache_dir, "grey.pkl")
-    if os.path.exists(file_path):
-        print(f"Loading grey data from {file_path}")
-        with open(file_path, 'rb') as file:
-            data = pickle.load(file)
 
-        arr_valid_ycocg = data["arr_valid_ycocg"]
-        arr_num_valid_ycocg = data["arr_num_valid_ycocg"]
-
-    else:
-        ls_valid_ycocg, ls_valid_ycocg_tensor, ls_num_valid_ycocg = find_all_valid_ycocg()
-        
-        max_num_elements = max(len(sub_list[0]) for sub_list in ls_valid_ycocg)
-        
-        arr_valid_ycocg = np.zeros((256, 3, max_num_elements))
-        arr_num_valid_ycocg = np.zeros(256)
-
-        for i, sub_list in enumerate(ls_valid_ycocg):
-            current_len = len(sub_list[0])
-            arr_num_valid_ycocg[i] = current_len
-            for j in range(3):
-                arr_valid_ycocg[i, j, :current_len] = sub_list[j]
-
-        data = {"arr_valid_ycocg": arr_valid_ycocg, "arr_num_valid_ycocg": arr_num_valid_ycocg}
-        with open(file_path, 'wb') as file:
-                pickle.dump(data, file)
-        
-        print(f"Grey data saved at {file_path}")
-
-    print(f"arr_valid_ycocg: {arr_valid_ycocg.shape}") # (256, 3, 32767)
-    print(f"arr_num_valid_ycocg: {arr_num_valid_ycocg.shape}") # (256,)
-
-    return arr_valid_ycocg, arr_num_valid_ycocg
-
-def compute_grey_prob(args, pc_num_elements, grey_arr, param_arr, grey_idx_to_prod_se_arr, arr_valid_ycocg, arr_num_valid_ycocg):
+def compute_grey_prob(args, pc_num_elements, grey_arr, param_arr, grey_idx_to_prod_se_arr):
     grey_prob = np.full((pc_num_elements, 1), -np.inf, dtype = np.float32)
     print(f"grey_arr: {grey_arr.shape}")
     
